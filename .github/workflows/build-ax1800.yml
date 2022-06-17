@@ -63,17 +63,17 @@ jobs:
 
     - name: run setup.py
       run: |
-        cd /workdir/openwrt
-        git config user.name github-actions
-        git config user.email github-actions@github.com
+        cd /workdir/openwrt   
+        git config --global user.email "github-actions@github.com"
+        git config --global user.name "github-actions"
         python3 setup.py -c config-wlan-ap.yml
 
     - name: Download package
       id: package
       run: |
         cd /workdir/openwrt/wlan-ap/openwrt
-        git config user.name github-actions
-        git config user.email github-actions@github.com
+        git config --global user.email "github-actions@github.com"
+        git config --global user.name "github-actions"
         ./scripts/gen_config.py target_wlan_ap-gl-ax1800 luci
 
     - name: Compile the firmware
