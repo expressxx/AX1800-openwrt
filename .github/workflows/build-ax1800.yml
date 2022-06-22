@@ -57,13 +57,14 @@ jobs:
     - name: Clone source code
       working-directory: /workdir
       run: |
-        df -hT $PWD
-        git clone $REPO_URL -b $REPO_BRANCH openwrt
-        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+        echo $PWD
+        echo $GITHUB_WORKSPACE
+        git clone $REPO_URL -b $REPO_BRANCH ax1800_build_code
+        ln -sf /workdir/ax1800_build_code $GITHUB_WORKSPACE/ax1800_build_code
 
     - name: run setup.py
       run: |
-        cd /workdir/openwrt   
+        cd /workdir/ax1800_build_code   
         git config --global user.email "github-actions@github.com"
         git config --global user.name "github-actions"
         python3 setup.py -c config-wlan-ap.yml
@@ -71,7 +72,7 @@ jobs:
     - name: Download package
       id: package
       run: |
-        cd /workdir/openwrt/wlan-ap/openwrt
+        cd /workdir/ax1800_build_code/wlan-ap/openwrt
         git config --global user.email "github-actions@github.com"
         git config --global user.name "github-actions"
         ./scripts/gen_config.py target_wlan_ap-gl-ax1800 luci
@@ -79,7 +80,7 @@ jobs:
     - name: Compile the firmware
       id: compile
       run: |
-        cd /workdir/openwrt/wlan-ap/openwrt
+        cd /workdir/ax1800_build_code/wlan-ap/openwrt
         echo -e "$(nproc) thread compile"
         make -j$(nproc) || make -j1 || make -j1 V=s
         echo "::set-output name=status::success"
@@ -102,7 +103,8 @@ jobs:
       id: organize
       if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
       run: |
-        cd openwrt/bin/targets/ipq807x/ipq60xx/
+        cd /workdir/ax1800_build_code/wlan-ap/openwrt/bin/targets/ipq807x/ipq60xx
+        echo $PWD
         rm -rf packages
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
         echo "::set-output name=status::success"
@@ -139,12 +141,3 @@ jobs:
       with:
         retain_days: 1
         keep_minimum_runs: 3
-
-    - name: Remove old Releases
-      uses: dev-drprasad/delete-older-releases@v0.1.0
-      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
-      with:
-        keep_latest: 3
-        delete_tags: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
